@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VROXS COMMUNITY | ELITE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --accent: #ff3c3c; --bg: #050505; }
+        body { background-color: var(--bg); color: #ececec; font-family: 'Outfit', sans-serif; overflow: hidden; }
+
+        .page-section {
+            height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;
+            padding: 90px 24px 80px 24px; overflow-y: auto;
+            transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+            opacity: 0; transform: translateY(20px); pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, #151515 0%, #050505 100%);
+        }
+        .page-section.active { opacity: 1; transform: translateY(0); pointer-events: all; z-index: 10; }
+
+        #sidebar { transition: transform 0.5s cubic-bezier(0.8, 0, 0.2, 1); background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(15px); }
+        .modal-blur { backdrop-filter: blur(12px); transition: 0.3s ease; }
+        .modal-content { transform: scale(0.9); transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .modal-active .modal-content { transform: scale(1); }
+
+        .v-input {
+            background: #111; border: 1px solid #222; padding: 12px 16px;
+            border-radius: 12px; width: 100%; outline: none; font-size: 13px; transition: 0.3s;
+        }
+        .v-input:focus { border-color: var(--accent); box-shadow: 0 0 20px rgba(255, 60, 60, 0.05); }
+        
+        .champ-card {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+            border: 1px solid rgba(255, 60, 60, 0.1); border-radius: 24px;
+            padding: 24px; margin-bottom: 20px; position: relative; text-align: center;
+        }
+        .champ-card::after { content: ''; position: absolute; bottom: -20px; left: 50%; width: 1px; height: 20px; background: #333; }
+        .champ-card:last-child::after { display: none; }
+
+        ::-webkit-scrollbar { width: 0; }
+    </style>
+</head>
+<body>
+
+    <div id="v-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-6 hidden modal-blur">
+        <div class="bg-[#0f0f0f] border border-white/10 w-full max-w-sm p-8 rounded-[32px] shadow-2xl modal-content">
+            <h3 id="m-title" class="text-xl font-black italic mb-2 text-red-500"></h3>
+            <p id="m-desc" class="text-gray-500 text-sm mb-6"></p>
+            <div id="m-body"></div>
+            <div class="flex justify-end gap-4 mt-8">
+                <button id="m-cancel" class="text-sm font-bold text-gray-600">BATAL</button>
+                <button id="m-ok" class="bg-red-600 text-white px-8 py-2.5 rounded-full text-sm font-black shadow-lg shadow-red-900/20">OKE</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="fixed top-0 w-full z-[100] px-8 py-6 flex justify-between items-center">
+        <button id="menu-open" class="text-xl"><i class="fas fa-bars-staggered"></i></button>
+        <div class="text-2xl font-black italic tracking-tighter uppercase">VROXS<span class="text-red-500">.</span></div>
+        <div id="reg-indicator" class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+    </header>
+
+    <div id="sidebar" class="fixed inset-0 z-[110] -translate-x-full p-12 flex flex-col justify-center">
+        <button id="menu-close" class="absolute top-8 left-8 text-3xl">&times;</button>
+        <nav class="flex flex-col gap-8">
+            <div onclick="nav('home')" class="text-4xl font-black hover:text-red-500 cursor-pointer transition">HOME</div>
+            <div onclick="nav('team')" class="text-4xl font-black hover:text-red-500 cursor-pointer transition">TEAM</div>
+            <div onclick="nav('champs')" class="text-4xl font-black text-red-600 cursor-pointer transition">CHAMPIONS</div>
+            <div onclick="nav('reg')" class="text-4xl font-black hover:text-red-500 cursor-pointer transition">REGRISTRASI</div>
+            <div onclick="nav('chat')" class="text-4xl font-black hover:text-red-500 cursor-pointer transition">CHAT</div>
+        </nav>
+    </div>
+
+    <section id="p-home" class="page-section active flex flex-col items-center justify-center">
+        <img id="main-logo" src="https://via.placeholder.com/200/000/fff?text=VROXS" class="w-40 h-40 object-contain relative z-10 mb-8">
+        <h1 id="main-title" class="text-4xl font-black tracking-tighter italic uppercase text-center">Vroxs Community</h1>
+        <p class="text-gray-600 text-[10px] tracking-[15px] uppercase mt-4">CHAMPIONS</p>
+    </section>
+
+    <section id="p-team" class="page-section">
+        <h2 class="text-2xl font-black mb-10 italic border-l-4 border-red-600 pl-4 uppercase">Divisi Tim</h2>
+        <div id="list-team" class="grid gap-6 max-w-sm mx-auto"></div>
+    </section>
+
+    <section id="p-champs" class="page-section">
+        <h2 class="text-2xl font-black mb-10 italic text-center text-red-500 uppercase">Hall of Fame</h2>
+        <div id="list-champs" class="flex flex-col items-center max-w-md mx-auto"></div>
+    </section>
+
+    <section id="p-reg" class="page-section">
+        <div class="max-w-md mx-auto">
+            <h2 class="text-2xl font-black mb-6 italic uppercase">Registration</h2>
+            <div id="lock-ui" class="hidden p-10 text-center bg-red-950/10 border border-red-900/30 rounded-3xl text-red-500 font-bold uppercase text-[10px] tracking-widest">Pendaftaran Sedang Ditutup</div>
+            <form id="f-reg" class="space-y-3 pb-10">
+                <input type="text" id="r-full" placeholder="Nama Lengkap" class="v-input" required>
+                <input type="text" id="r-call" placeholder="Nama Panggilan" class="v-input" required>
+                <div class="flex gap-2">
+                    <input type="date" id="r-dob" class="v-input" required>
+                    <input type="number" id="r-age" placeholder="Umur" class="v-input w-24" required>
+                </div>
+                <input type="email" id="r-email" placeholder="Email Aktif" class="v-input" required>
+                <input type="tel" id="r-phone" placeholder="Nomor HP / WA" class="v-input" required>
+                <input type="text" id="r-ign" placeholder="Nama Dalam Game" class="v-input" required>
+                <input type="text" id="r-id" placeholder="ID Game (UID)" class="v-input" required>
+                <input type="text" id="r-team" placeholder="Tim yang Dituju" class="v-input" required>
+                <button class="w-full bg-white text-black font-black py-4 rounded-2xl mt-2 hover:bg-red-600 hover:text-white transition uppercase text-sm">Kirim Lamaran</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="p-chat" class="page-section">
+        <div class="max-w-lg mx-auto flex flex-col h-[75vh] bg-[#0a0a0a] rounded-[32px] border border-white/5 overflow-hidden">
+            <div class="p-5 border-b border-white/5 flex justify-between bg-white/5 items-center">
+                <span class="text-[10px] font-black text-red-500 uppercase">Global Lobby</span>
+                <span id="my-nick" class="text-[10px] text-gray-500 uppercase"></span>
+            </div>
+            <div id="chat-box" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4"></div>
+            <form id="f-chat" class="p-4 flex gap-2 bg-white/5">
+                <input type="text" id="chat-in" placeholder="Ketik pesan..." class="flex-1 bg-transparent outline-none text-sm px-2">
+                <button class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center"><i class="fas fa-paper-plane text-xs"></i></button>
+            </form>
+        </div>
+    </section>
+
+    <section id="p-admin" class="page-section bg-black">
+        <div class="max-w-5xl mx-auto pb-20">
+            <div class="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+                <h2 class="text-2xl font-black italic uppercase">Own Panel</h2>
+                <button onclick="nav('home')" class="text-[10px] bg-white text-black px-5 py-2 rounded-full font-black">KELUAR</button>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-[#0f0f0f] p-6 rounded-[28px] border border-white/5">
+                    <h3 class="text-xs font-black text-gray-500 uppercase mb-4 tracking-widest">Database Pendaftar</h3>
+                    <div id="adm-subs" class="space-y-4 max-h-[600px] overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="bg-[#0f0f0f] p-6 rounded-[28px] space-y-3 border border-white/5">
+                        <h3 class="text-xs font-black text-gray-500 uppercase">Web Settings</h3>
+                        <input type="text" id="adm-logo-url" placeholder="Link Logo" class="v-input text-xs">
+                        <input type="text" id="adm-title" placeholder="Nama Komunitas" class="v-input text-xs">
+                        <div class="flex justify-between items-center bg-black p-4 rounded-xl">
+                            <span class="text-xs">Reg Status:</span>
+                            <button id="adm-lock-btn" onclick="toggleLock()" class="px-6 py-1.5 rounded-full text-[10px] font-black"></button>
+                        </div>
+                        <button onclick="saveWeb()" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-sm">UPDATE</button>
+                    </div>
+
+                    <div class="bg-[#0f0f0f] p-6 rounded-[28px] border border-white/5">
+                        <h3 class="text-xs font-black text-gray-500 uppercase mb-3">Kelola Content</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <p class="text-[10px] font-bold text-green-500">TAMBAH TIM</p>
+                                <input type="text" id="adm-t-name" placeholder="Nama Tim" class="v-input text-xs">
+                                <input type="text" id="adm-t-url" placeholder="Link Foto" class="v-input text-xs">
+                                <button onclick="addTeam()" class="w-full bg-green-700 py-2 rounded-xl text-[10px] font-bold">ADD</button>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-[10px] font-bold text-yellow-500">TAMBAH JUARA</p>
+                                <input type="text" id="adm-c-tour" placeholder="Turnamen" class="v-input text-xs">
+                                <input type="text" id="adm-c-team" placeholder="Tim" class="v-input text-xs">
+                                <input type="text" id="adm-c-url" placeholder="Link Foto" class="v-input text-xs">
+                                <button onclick="addChamp()" class="w-full bg-yellow-700 py-2 rounded-xl text-[10px] font-bold">ADD</button>
+                            </div>
+                        </div>
+                        <div id="adm-list-content" class="mt-4 space-y-2 border-t border-white/5 pt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="fixed bottom-0 w-full p-6 text-center z-50">
+        <p onclick="adminGate()" class="text-[9px] font-bold tracking-[8px] text-gray-700 cursor-pointer hover:text-white uppercase">Vroxs | 2026©</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-Aa_hcUqpSo7XrMtVyPPR_xI17Wp3aho",
+            authDomain: "ojeklocal-c1ce5.firebaseapp.com",
+            databaseURL: "https://ojeklocal-c1ce5-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ojeklocal-c1ce5",
+            storageBucket: "ojeklocal-c1ce5.firebasestorage.app",
+            messagingSenderId: "1011045048866",
+            appId: "1:1011045048866:web:bae9dac1a35d9fca1c207b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let myNick = localStorage.getItem('vroxs_nick');
+        let regLocked = false;
+
+        window.nav = (id) => {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('p-' + id).classList.add('active');
+            document.getElementById('sidebar').style.transform = "translateX(-100%)";
+            if(id === 'chat' && !myNick) {
+                openModal("IDENTITAS", "Masukkan nickname kamu:", "input", (val) => {
+                    if(val) { myNick = val; localStorage.setItem('vroxs_nick', val); } else nav('home');
+                });
+            }
+        };
+
+        document.getElementById('menu-open').onclick = () => document.getElementById('sidebar').style.transform = "translateX(0)";
+        document.getElementById('menu-close').onclick = () => document.getElementById('sidebar').style.transform = "translateX(-100%)";
+
+        window.openModal = (title, desc, type, callback) => {
+            document.getElementById('m-title').innerText = title;
+            document.getElementById('m-desc').innerText = desc;
+            const body = document.getElementById('m-body');
+            body.innerHTML = "";
+            if(type === 'input' || type === 'password') {
+                const input = document.createElement('input');
+                input.className = "v-input mt-2"; input.type = type === 'password' ? 'password' : 'text';
+                input.id = "m-field"; body.appendChild(input);
+            }
+            const m = document.getElementById('v-modal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('modal-active'), 10);
+            document.getElementById('m-ok').onclick = () => {
+                const val = document.getElementById('m-field')?.value;
+                m.classList.remove('modal-active');
+                setTimeout(() => m.classList.add('hidden'), 300);
+                callback(val || true);
+            };
+            document.getElementById('m-cancel').onclick = () => {
+                m.classList.remove('modal-active');
+                setTimeout(() => m.classList.add('hidden'), 300);
+                callback(null);
+            };
+        };
+
+        window.adminGate = () => {
+            openModal("ACCESS", "Enter Admin Password:", "password", (pw) => {
+                if(pw === "210213") nav('admin');
+            });
+        };
+
+        // DATABASE LISTENERS
+        onValue(ref(db, 'config'), (snap) => {
+            const d = snap.val() || {};
+            document.getElementById('main-logo').src = d.logoUrl || "https://via.placeholder.com/200/000/fff?text=VROXS";
+            document.getElementById('main-title').innerText = d.title || "Vroxs Community";
+            document.getElementById('adm-logo-url').value = d.logoUrl || "";
+            document.getElementById('adm-title').value = d.title || "";
+            regLocked = d.isLocked;
+            const lb = document.getElementById('adm-lock-btn');
+            const ri = document.getElementById('reg-indicator');
+            lb.innerText = regLocked ? "BUKA REG" : "TUTUP REG";
+            lb.className = regLocked ? "px-6 py-1.5 rounded-full text-[10px] font-black bg-green-600" : "px-6 py-1.5 rounded-full text-[10px] font-black bg-red-600";
+            ri.className = regLocked ? "w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_#dc2626]" : "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
+            document.getElementById('f-reg').classList.toggle('hidden', regLocked);
+            document.getElementById('lock-ui').classList.toggle('hidden', !regLocked);
+        });
+
+        onValue(ref(db, 'teams'), (snap) => {
+            const list = document.getElementById('list-team');
+            const adm = document.getElementById('adm-list-content');
+            list.innerHTML = ""; 
+            snap.forEach(c => {
+                const t = c.val();
+                list.innerHTML += `<div class="bg-[#111] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+                    <img src="${t.imgUrl}" class="w-full h-44 object-cover opacity-60">
+                    <div class="p-5 text-center font-black italic tracking-widest text-xs uppercase">${t.name}</div>
+                </div>`;
+                adm.innerHTML += `<div class="flex justify-between bg-black p-3 rounded-xl text-[9px] font-bold border border-white/5">
+                    <span class="text-green-500">TIM: ${t.name}</span>
+                    <button onclick="delData('teams/${c.key}')" class="text-red-500 underline">HAPUS</button>
+                </div>`;
+            });
+        });
+
+        onValue(ref(db, 'champs'), (snap) => {
+            const list = document.getElementById('list-champs');
+            list.innerHTML = "";
+            snap.forEach(c => {
+                const h = c.val();
+                list.innerHTML += `<div class="champ-card w-full max-w-sm">
+                    <img src="${h.imgUrl}" class="w-16 h-16 rounded-full mx-auto mb-4 border-2 border-red-500 p-0.5 object-cover shadow-[0_0_15px_rgba(255,60,60,0.3)]">
+                    <h4 class="text-[10px] font-black text-red-500 uppercase mb-1">${h.tournament}</h4>
+                    <p class="text-sm font-black italic uppercase">${h.team}</p>
+                </div>`;
+            });
+        });
+
+        onValue(ref(db, 'chats'), (snap) => {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = "";
+            snap.forEach(c => {
+                const msg = c.val(); const isMe = msg.sender === myNick;
+                box.innerHTML += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                    <span class="text-[8px] text-gray-600 mb-1">${msg.sender}</span>
+                    <div class="px-4 py-2 text-sm rounded-2xl ${isMe ? 'bg-red-600 rounded-tr-none' : 'bg-white/5 rounded-tl-none'} border border-white/5">${msg.text}</div>
+                </div>`;
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        // LISTENER PENDAFTAR (SEMUA DATA)
+        onValue(ref(db, 'submissions'), (snap) => {
+            const box = document.getElementById('adm-subs');
+            box.innerHTML = "";
+            snap.forEach(c => {
+                const s = c.val();
+                box.innerHTML += `
+                    <div class="p-5 bg-black rounded-3xl border border-white/10 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-red-500 font-black text-sm uppercase">${s.full}</h4>
+                                <p class="text-[10px] text-gray-500 italic">Call: ${s.call}</p>
+                            </div>
+                            <button onclick="delData('submissions/${c.key}')" class="text-[9px] bg-red-600/20 text-red-500 px-3 py-1 rounded-full font-bold">HAPUS</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-y-1 gap-x-4 text-[9px] text-gray-400 border-t border-white/5 pt-2">
+                            <p><b>Lahir:</b> ${s.dob}</p>
+                            <p><b>Umur:</b> ${s.age} Thn</p>
+                            <p><b>WA:</b> ${s.phone}</p>
+                            <p><b>IGN:</b> ${s.ign}</p>
+                            <p class="col-span-2 text-white"><b>Email:</b> ${s.email}</p>
+                            <p class="col-span-2 text-white"><b>ID:</b> ${s.uid}</p>
+                            <p class="col-span-2 text-red-500 font-black uppercase mt-1"><b>Tujuan:</b> ${s.target}</p>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        // ACTIONS
+        window.saveWeb = () => {
+            update(ref(db, 'config'), { logoUrl: document.getElementById('adm-logo-url').value, title: document.getElementById('adm-title').value })
+            .then(() => openModal("DONE", "Web updated!", "info", () => {}));
+        };
+
+        window.toggleLock = () => update(ref(db, 'config'), { isLocked: !regLocked });
+
+        window.addTeam = () => {
+            const n = document.getElementById('adm-t-name').value, u = document.getElementById('adm-t-url').value;
+            if(n && u) { push(ref(db, 'teams'), { name: n, imgUrl: u }); document.getElementById('adm-t-name').value = ""; document.getElementById('adm-t-url').value = ""; }
+        };
+
+        window.addChamp = () => {
+            const t = document.getElementById('adm-c-tour').value, m = document.getElementById('adm-c-team').value, u = document.getElementById('adm-c-url').value;
+            if(t && m && u) { push(ref(db, 'champs'), { tournament: t, team: m, imgUrl: u }); document.getElementById('adm-c-tour').value = ""; document.getElementById('adm-c-team').value = ""; document.getElementById('adm-c-url').value = ""; }
+        };
+
+        window.delData = (path) => {
+            openModal("DELETE", "Hapus data ini?", "info", (ok) => { if(ok) remove(ref(db, path)); });
+        };
+
+        document.getElementById('f-reg').onsubmit = (e) => {
+            e.preventDefault();
+            const data = {
+                full: document.getElementById('r-full').value,
+                call: document.getElementById('r-call').value,
+                dob: document.getElementById('r-dob').value,
+                age: document.getElementById('r-age').value,
+                email: document.getElementById('r-email').value,
+                phone: document.getElementById('r-phone').value,
+                ign: document.getElementById('r-ign').value,
+                uid: document.getElementById('r-id').value,
+                target: document.getElementById('r-team').value
+            };
+            push(ref(db, 'submissions'), data).then(() => {
+                openModal("SENT", "Lamaran kamu telah masuk!", "info", () => { e.target.reset(); nav('home'); });
+            });
+        };
+
+        document.getElementById('f-chat').onsubmit = (e) => {
+            e.preventDefault(); const inp = document.getElementById('chat-in');
+            if(inp.value.trim()) { push(ref(db, 'chats'), { sender: myNick, text: inp.value }); inp.value = ""; }
+        };
+    </script>
+</body>
+</html>
